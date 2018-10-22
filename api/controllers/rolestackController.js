@@ -26,10 +26,10 @@ var lastUsers = null;
 
 //BLOQUE
 exports.list_all_bloques = function(req, res) {
-    Bloque.find({}, function(err, task) {
+    Bloque.find({}, function(err, b) {
         if (err)
             res.send(err);
-        res.json(task);
+        res.send(customSuccessMessage(b));
     });
 };
 
@@ -42,12 +42,14 @@ exports.list_all_interbloques = function(req, res) {
     });
 };
 
+
 //DIPUTADO
 exports.list_all_diputados = function(req, res) {
-    Diputado.find({}, function(err, task) {
+    Diputado.find({}, function(err, d) {
         if (err)
             res.send(err);
-        res.json(task);
+
+        res.send(customSuccessMessage(d));
     });
 };
 
@@ -105,6 +107,33 @@ exports.get_requerimiento = function(req, res) {
     });
 };
 
+
+exports.get_requerimientos_by_bloque = function(req, res) {
+
+    Requerimiento.find({ 'bloque._id': req.params.bloque_id}, function (err, docs) {
+
+        if(docs==null||err!=null){
+            res.send(customErrorMessage("No se encontró ningun requerimiento asociado al bloque"));
+            return;
+        }
+
+        return res.json(docs);
+    });
+};
+
+exports.get_requerimientos_by_interbloque = function(req, res) {
+
+    Requerimiento.find({ 'interbloque._id': req.params.interbloque_id}, function (err, docs) {
+
+        if(docs==null||err!=null){
+            res.send(customErrorMessage("No se encontró ningun requerimiento asociado al bloque"));
+            return;
+        }
+
+        return res.json(docs);
+    });
+};
+
 exports.save_requerimiento = function(req, res) {
 
     if(!req.body.preguntas || req.body.preguntas.length<1 ){
@@ -116,9 +145,6 @@ exports.save_requerimiento = function(req, res) {
         res.send(customErrorMessage("El requerimiento debe estar asociado a un diputado, bloque o interbloque."));
         return;
     }
-
-    console.log("Id dipu recibido "+req.body.diputado_id);
-    console.log("Id bloque recibido "+req.body.bloque_id);
 
     var nuevoRequerimiento = new Requerimiento(req.body);
 
@@ -178,48 +204,53 @@ exports.save_requerimiento = function(req, res) {
     });
 }
 
+
+
 //EXTRAS
+
 exports.list_all_extras = function(req, res) {
-    Extra.find({}, function(err, task) {
+    Extra.find({}, function(err, extra) {
         if (err)
             res.send(err);
-        res.json(task);
+        res.json(extra);
     });
 };
 
-//-------------------------JGM----------------------------
-exports.rolestack_init = function(req, res) {
-  Client.findOne({ '_id': 'dse'}, 'api_key', function (err, client) {
-    var retMsg = null;
-    var found = true;
-    if(err){
-        retMsg = customErrorMessage("Error al obtener el cliente");
-        found = false;
-    }
-    if(client==null){
-      var log = "";
-      var dseAc = new Client({api_key: 'dse.91295A27F6216C8DB98C969D4FAD8', _id: 'dse', enabled: true});
-      dseAc.save();
-      var dgisAc = new Client({api_key: 'dgis.AFBD487921B962A247B2A74F9CAC1', _id: 'dgis', enabled: true});
-      dgisAc.save();
-      retMsg = customSuccessMessage("Inicializado exitosamente.");
-      res.send(retMsg);
-      return;
-    }else{
-      retMsg = customSuccessMessage("No se puede inicializar dos veces.");
-      res.send(retMsg);
-      return;
-    }
-  });
+exports.get_extra_by_guid = function(req, res) {
+
+    //busco el extra en la base
+    Extra.findOne({'guid': req.params.guid}, function (err, extra) {
+        var found = true;
+
+        if(err){
+            found = false;
+            res.send((customErrorMessage("Ocurrió un error buscando al usuario")))
+        }
+
+        //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
+        if(extra==null){
+            var log = "";
+
+            //busco el user
+            var user = "test";//??????????
+            if(user==null){
+                res.send(customErrorMessage("Usuario no encontrado"));
+            }
+
+            extra = new Extra({guid: "guid_test", cuil: "20000000001",
+                                        contacto: "contacto_test", apellido: "apellido_test",
+                                        nombre : "nombre_test"
+                                        });
+            extra.save();
+
+        }
+
+        return res.json(extra)
+    });
+
 };
 
-exports.list_all_usersets = function(req, res) {
-  UserSet.find({}, function(err, task) {
-    if (err)
-      res.send(err);
-    res.json(task);
-  });
-};
+//-------------------------JGM----------------------------
 
 exports.create_userset = function(req, res) {
   var new_userset = new UserSet(req.body);
@@ -637,6 +668,17 @@ function getOwnerByKey(apiKey, callback){
   });
 }
 
+function getInterbloqueByBloque(bloque, callback){
+
+    Interbloque.findOne( { "bloques" :bloque } , function (err, bloque) {
+        if(bloque==null){
+            callback(null);
+        }else{
+            callback(bloque._id, bloque);
+        }
+    });
+}
+
 function getBloqueById(_id, callback){
 
     var ObjectId = mongoose.Types.ObjectId;
@@ -651,25 +693,12 @@ function getBloqueById(_id, callback){
     });
 }
 
-
-function getInterbloqueByBloque(bloque, callback){
-
-    Interbloque.findOne( { "bloques" :bloque } , function (err, bloque) {
-        if(bloque==null){
-            callback(null);
-        }else{
-            callback(bloque._id, bloque);
-        }
-    });
-}
-
-
 function getDiputadoById(_id, callback){
 
     var ObjectId = mongoose.Types.ObjectId;
     var a = new ObjectId(_id);
 
-    Diputado.find({ '_id': a }, function (err, diputado) {
+    Diputado.findOne({ '_id': a }, function (err, diputado) {
         if(diputado==null){
             callback(null);
         }else{
@@ -707,7 +736,3 @@ function errorMessage(err){
   return err;
 }
 
-String.prototype.toObjectId = function() {
-    var ObjectId = (require('mongoose').Types.ObjectId);
-    return new ObjectId(this.toString());
-};

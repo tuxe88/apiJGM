@@ -3,6 +3,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 
+
 //JGM
 var Bloque = new Schema({
     nombre: {
@@ -49,11 +50,12 @@ var Diputado = new Schema({
     }
 });
 
+
+var Pregunta = new Schema({
+    texto:String
+});
+
 var Extra = new Schema({
-    _id: {
-        type: String,
-        required: 'Es necesario un id para el diputado',
-    },
     guid:{
         type:String
     },
@@ -77,8 +79,22 @@ var Extra = new Schema({
     },
     interbloque: {
         type: Interbloque
+    },
+    requerimientos: {
+        type: [Requerimiento]
     }
 });
+
+var Requerimiento = new Schema({
+    introduccion: String,
+    preguntas: [Pregunta],
+    diputado: Diputado,
+    bloque: Bloque,
+    interbloque: Interbloque,
+    extra: Extra
+});
+
+
 
 var Informe = new Schema({
     _id: {
@@ -97,18 +113,6 @@ var Informe = new Schema({
     },
 });
 
-var Pregunta = new Schema({
-    texto:String
-});
-
-var Requerimiento = new Schema({
-    introduccion: String,
-    preguntas: [Pregunta],
-    diputado: Diputado,
-    bloque: Bloque,
-    interbloque: Interbloque,
-    extra: Extra
-});
 
 var Role = new Schema({
   _id: {

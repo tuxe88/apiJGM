@@ -20,6 +20,9 @@ module.exports = function(app) {
     app.route('/get/extra')
         .get(rolestack.list_all_extras);
 
+    app.route('/get/extra/:guid')
+        .get(rolestack.get_extra_by_guid);
+
 //INFORME
     app.route('/get/informe')
         .get(rolestack.list_all_informes);
@@ -33,6 +36,12 @@ module.exports = function(app) {
 
     app.route('/get/requerimiento/:requerimiento_id')
         .get(rolestack.get_requerimiento);
+
+    app.route('/get/requerimiento/bloque/:bloque_id')
+        .get(rolestack.get_requerimientos_by_bloque);
+
+    app.route('/get/requerimiento/interbloque/:interbloque_id')
+        .get(rolestack.get_requerimientos_by_interbloque);
 
     app.route('/post/requerimiento')
         .post(rolestack.save_requerimiento);
@@ -60,9 +69,6 @@ module.exports = function(app) {
 
   app.route('/users/cache/:cuil')
     .get(rolestack.users_by_cuil);
-
-  app.route('/rolestack/init')
-    .get(rolestack.rolestack_init);
 
   app.route('/users')
     .get(rolestack.get_users);
