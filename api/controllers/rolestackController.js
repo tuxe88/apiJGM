@@ -146,9 +146,20 @@ exports.save_requerimiento = function(req, res) {
         return;
     }
 
-    var nuevoRequerimiento = new Requerimiento(req.body);
+    var nuevoRequerimiento = new Requerimiento();
 
-    getDiputadoById(req.body.diputado_id,function(diputadoId,diputado){
+    var preguntas = Array();
+
+    req.body.preguntas.forEach(function(element) {
+        var p = new Pregunta();
+        p.texto = element;
+        preguntas.push(p);
+    });
+
+    nuevoRequerimiento.preguntas = preguntas;
+    nuevoRequerimiento.introduccion = req.body.introduccion;
+
+    getDiputadoById(req.body.diputado_id, function(diputadoId,diputado){
 
         if(diputadoId==null){
             getBloqueById(req.body.bloque_id, function(bloqueId,bloque){
@@ -167,11 +178,14 @@ exports.save_requerimiento = function(req, res) {
 
                         nuevoRequerimiento.save()
                         .then(requerimiento => {
-                            res.status(200).send("requerimiento guardado correctamente");
+                            //console.log(customSuccessMessage("prueba"));
+                            res.status(200);
+                            res.send(customSuccessMessage("Requerimiento guardado correctamente"));
                         })
                         .catch(err => {
                             console.log(err);
-                            res.status(400).send("no se pudo guardar el requerimiento");
+                            res.status(400);
+                            res.send(customErrorMessage("No se pudo guardar el requerimiento"));
                         });
                     });
 
@@ -192,11 +206,13 @@ exports.save_requerimiento = function(req, res) {
 
                 nuevoRequerimiento.save()
                     .then(requerimiento => {
-                        res.status(200).send("requerimiento guardado correctamente");
+                        res.status(200);
+                        res.send(customSuccessMessage("Requerimiento guardado correctamente"));
                     })
                     .catch(err => {
                         console.log(err);
-                        res.status(400).send("no se pudo guardar el requerimiento");
+                        res.status(400);
+                        res.send(customErrorMessage("No se pudo guardar el requerimiento"));
                     });
             });
 
