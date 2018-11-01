@@ -121,6 +121,19 @@ exports.get_requerimientos_by_bloque = function(req, res) {
     });
 };
 
+exports.get_requerimientos_by_extra = function(req, res) {
+
+    Requerimiento.find({ 'extra.guid': req.params.extra_id}, function (err, docs) {
+
+        if(docs==null||err!=null){
+            res.send(customErrorMessage("No se encontró ningun requerimiento asociado al usuario"));
+            return;
+        }
+
+        return res.send(customSuccessMessage(docs));
+    });
+};
+
 exports.get_requerimientos_by_interbloque = function(req, res) {
 
     Requerimiento.find({ 'interbloque._id': req.params.interbloque_id}, function (err, docs) {
@@ -136,18 +149,12 @@ exports.get_requerimientos_by_interbloque = function(req, res) {
 
 exports.save_requerimiento = function(req, res) {
 
-    if(!req.body.preguntas || req.body.preguntas.length<1 ){
-        res.send(customErrorMessage("El requerimiento debe tener al menos una pregunta"));
-        return;
-    }
-
     if(req.body.bloque_id==null && req.body.diputado_id==null){
         res.send(customErrorMessage("El requerimiento debe estar asociado a un diputado, bloque o interbloque."));
         return;
     }
 
     var nuevoRequerimiento = new Requerimiento();
-
     var preguntas = Array();
 
     req.body.preguntas.forEach(function(element) {
@@ -156,19 +163,60 @@ exports.save_requerimiento = function(req, res) {
         preguntas.push(p);
     });
 
-    nuevoRequerimiento.preguntas = preguntas;
-    nuevoRequerimiento.introduccion = req.body.introduccion;
+    if( preguntas.length<1 ){
+        res.send(customErrorMessage("El requerimiento debe tener al menos una pregunta"));
+        return;
+    }
 
-    getDiputadoById(req.body.diputado_id, function(diputadoId,diputado){
+    getExtraByGuid(req.body.user.guid,function(extraId, extra){
 
-        if(diputadoId==null){
-            getBloqueById(req.body.bloque_id, function(bloqueId,bloque){
-                if(bloqueId==null){
-                    res.send(customErrorMessage("Diputado y Bloques no existente"));
+        if(extraId == null){
+            //console.log(extraId+ " no hay extra");
+            res.send(customErrorMessage("Su usuario no tiene asociado un rol. Comuníquese con computación recinto. Interno 2471."));
+        }else{
+
+            nuevoRequerimiento.preguntas = preguntas;
+            nuevoRequerimiento.introduccion = req.body.introduccion;
+            nuevoRequerimiento.extra = extra;
+
+            getDiputadoById(req.body.diputado_id, function(diputadoId,diputado){
+
+                if(diputadoId==null){
+                    getBloqueById(req.body.bloque_id, function(bloqueId,bloque){
+                        if(bloqueId==null){
+                            res.send(customErrorMessage("Diputado y Bloques no existente"));
+                        }else{
+                            nuevoRequerimiento.bloque = bloque;
+                            nuevoRequerimiento.diputado = null;
+                            nuevoRequerimiento.interbloque = getInterbloqueByBloque(bloque,function(interbloqueId,interbloque){
+
+                                if(interbloqueId!=null){
+                                    nuevoRequerimiento.interbloque = interbloque;
+                                }else{
+                                    nuevoRequerimiento.interbloque = null;
+                                }
+
+                                nuevoRequerimiento.save()
+                                    .then(requerimiento => {
+                                        //console.log(customSuccessMessage("prueba"));
+                                        res.status(200);
+                                        res.send(customSuccessMessage("Requerimiento guardado correctamente"));
+                                    })
+                                    .catch(err => {
+                                        console.log(err);
+                                        res.status(400);
+                                        res.send(customErrorMessage("No se pudo guardar el requerimiento"));
+                                    });
+                            });
+
+                        }
+                    });
+
+                    return;
                 }else{
-                    nuevoRequerimiento.bloque = bloque;
-                    nuevoRequerimiento.diputado = null;
-                    nuevoRequerimiento.interbloque = getInterbloqueByBloque(bloque,function(interbloqueId,interbloque){
+                    nuevoRequerimiento.diputado = diputado;
+                    nuevoRequerimiento.bloque = diputado.bloque;
+                    nuevoRequerimiento.interbloque = getInterbloqueByBloque(diputado.bloque,function(interbloqueId,interbloque){
 
                         if(interbloqueId!=null){
                             nuevoRequerimiento.interbloque = interbloque;
@@ -177,47 +225,24 @@ exports.save_requerimiento = function(req, res) {
                         }
 
                         nuevoRequerimiento.save()
-                        .then(requerimiento => {
-                            //console.log(customSuccessMessage("prueba"));
-                            res.status(200);
-                            res.send(customSuccessMessage("Requerimiento guardado correctamente"));
-                        })
-                        .catch(err => {
-                            console.log(err);
-                            res.status(400);
-                            res.send(customErrorMessage("No se pudo guardar el requerimiento"));
-                        });
+                            .then(requerimiento => {
+                                res.status(200);
+                                res.send(customSuccessMessage("Requerimiento guardado correctamente"));
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                res.status(400);
+                                res.send(customErrorMessage("No se pudo guardar el requerimiento"));
+                            });
                     });
 
                 }
-            });
-
-            return;
-        }else{
-            nuevoRequerimiento.diputado = diputado;
-            nuevoRequerimiento.bloque = diputado.bloque;
-            nuevoRequerimiento.interbloque = getInterbloqueByBloque(diputado.bloque,function(interbloqueId,interbloque){
-
-                if(interbloqueId!=null){
-                    nuevoRequerimiento.interbloque = interbloque;
-                }else{
-                    nuevoRequerimiento.interbloque = null;
-                }
-
-                nuevoRequerimiento.save()
-                    .then(requerimiento => {
-                        res.status(200);
-                        res.send(customSuccessMessage("Requerimiento guardado correctamente"));
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(400);
-                        res.send(customErrorMessage("No se pudo guardar el requerimiento"));
-                    });
             });
 
         }
+
     });
+
 }
 
 
@@ -243,7 +268,7 @@ exports.get_extra_by_guid = function(req, res) {
             res.send((customErrorMessage("Ocurrió un error buscando al usuario")))
         }
 
-        //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
+            //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
         if(extra==null){
             var log = "";
 
@@ -709,7 +734,23 @@ function getBloqueById(_id, callback){
     });
 }
 
+function getExtraByGuid(guid, callback){
+
+    Extra.findOne({ 'guid': guid }, function (err, extra) {
+        if(extra==null){
+            callback(null);
+        }else{
+            callback(extra._id, extra);
+        }
+    });
+
+}
+
 function getDiputadoById(_id, callback){
+
+    if(_id=="-1" || _id===null) {
+        _id = null;
+    }
 
     var ObjectId = mongoose.Types.ObjectId;
     var a = new ObjectId(_id);
@@ -734,7 +775,7 @@ function successMessage(){
 function customSuccessMessage(pData){
   var r = {
     success: true,
-    data: pData
+    message: pData
   };
   return r;
 }

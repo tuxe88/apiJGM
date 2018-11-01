@@ -56,33 +56,14 @@ var Pregunta = new Schema({
 });
 
 var Extra = new Schema({
-    guid:{
-        type:String
-    },
-    cuil: {
-        type: String
-    },
-    contacto: {
-        type: String
-    },
-    nombre: {
-        type: String
-    },
-    apellido: {
-        type: String
-    },
-    diputado: {
-        type: Diputado
-    },
-    bloque: {
-        type: Bloque
-    },
-    interbloque: {
-        type: Interbloque
-    },
-    requerimientos: {
-        type: [Requerimiento]
-    }
+    texto:String,
+    cuil:String,
+    contacto:String,
+    nombre:String,
+    apellido:String,
+    diputado: Diputado,
+    bloque: Bloque,
+    interbloque:Interbloque
 });
 
 var Requerimiento = new Schema({
@@ -93,6 +74,7 @@ var Requerimiento = new Schema({
     interbloque: Interbloque,
     extra: Extra
 });
+
 
 
 

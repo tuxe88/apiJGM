@@ -40,6 +40,9 @@ module.exports = function(app) {
     app.route('/get/requerimiento/bloque/:bloque_id')
         .get(rolestack.get_requerimientos_by_bloque);
 
+    app.route('/get/requerimiento/usuario/:guid')
+        .get(rolestack.get_requerimientos_by_extra);
+
     app.route('/get/requerimiento/interbloque/:interbloque_id')
         .get(rolestack.get_requerimientos_by_interbloque);
 
