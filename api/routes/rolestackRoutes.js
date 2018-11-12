@@ -16,12 +16,18 @@ module.exports = function(app) {
     app.route('/get/diputado')
         .get(rolestack.list_all_diputados);
 
+    app.route('/get/diputado/bloque/:bloque_id')
+        .get(rolestack.get_diputados_by_bloque);
+
+    app.route('/get/diputado/interbloque/:interbloque_id')
+        .get(rolestack.get_diputados_by_interbloque);
+
 //EXTRA
     app.route('/get/extra')
         .get(rolestack.list_all_extras);
 
-    app.route('/get/extra/:guid')
-        .get(rolestack.get_extra_by_guid);
+    app.route('/update/extra')
+        .post(rolestack.update_extra_by_guid);
 
 //INFORME
     app.route('/get/informe')

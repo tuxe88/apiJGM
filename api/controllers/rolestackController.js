@@ -38,7 +38,7 @@ exports.list_all_interbloques = function(req, res) {
     Interbloque.find({}, function(err, task) {
         if (err)
             res.send(err);
-        res.json(task);
+        res.send(customSuccessMessage(task));
     });
 };
 
@@ -52,6 +52,35 @@ exports.list_all_diputados = function(req, res) {
         res.send(customSuccessMessage(d));
     });
 };
+
+exports.get_diputados_by_bloque = function(req, res) {
+
+    Diputado.find({ 'bloque._id': req.params.bloque_id }, function (err, doc) {
+
+        if(doc==null||err!=null){
+            res.send(customErrorMessage("No se encontro el bloque"));
+            return;
+        }
+
+        return res.json(doc);
+    });
+};
+
+exports.get_diputados_by_interbloque = function(req, res) {
+
+    Diputado.find({ 'interbloque.bloque._id': req.params.interbloque_id }, function (err, doc) {
+
+        if(doc==null||err!=null){
+            res.send(customErrorMessage("No se encontro el interbloque"));
+            return;
+        }
+
+        return res.json(doc);
+    });
+};
+
+
+
 
 //PROVINCIA
 exports.list_all_provincias = function(req, res) {
@@ -249,11 +278,29 @@ exports.save_requerimiento = function(req, res) {
 
 //EXTRAS
 
+exports.update_extra_by_guid = function (req, res) {
+
+    console.log(req.body)
+
+    Extra.findByIdAndUpdate(req.params.extra_id, {$set:req.body}, function(err, result){
+        if(err){
+            console.log("Errorrrrr");
+            //console.log(err);
+        }
+
+        console.log("Todo piola");
+        //console.log("RESULT: " + result);
+    });
+
+    res.send('Done')
+}
+
 exports.list_all_extras = function(req, res) {
     Extra.find({}, function(err, extra) {
         if (err)
             res.send(err);
-        res.json(extra);
+        console.log(extra)
+        res.send(customSuccessMessage(extra));
     });
 };
 
