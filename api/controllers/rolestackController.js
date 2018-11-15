@@ -280,26 +280,88 @@ exports.save_requerimiento = function(req, res) {
 
 exports.update_extra_by_guid = function (req, res) {
 
-    console.log(req.body)
+    getExtraById(req.body.extra_id, function(err, extra){
 
-    Extra.findByIdAndUpdate(req.params.extra_id, {$set:req.body}, function(err, result){
-        if(err){
-            console.log("Errorrrrr");
-            //console.log(err);
-        }
+        getDiputadoById(req.body.diputado_id, function(id,diputado){
 
-        console.log("Todo piola");
-        //console.log("RESULT: " + result);
+            if(diputado != null){
+
+                extra.diputado = diputado;
+                extra.bloque = diputado.bloque;
+                extra.interbloque = diputado.interbloque;
+
+                extra.save()
+                    .then(extra => {
+                        res.status(200);
+                        res.send(customSuccessMessage("Diputado asociado correctamente."));
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        res.status(400);
+                        res.send(customErrorMessage("Ocurrió un error asociando el diputado."));
+                    });
+            }else{
+                getBloqueById(req.body.bloque_id,function(id,bloque){
+
+                    if(bloque!=null){
+
+                        extra.diputado = null;
+                        extra.bloque = bloque;
+                        extra.interbloque = bloque.interbloque;
+
+                        extra.save()
+                            .then(extra => {
+                                res.status(200);
+                                res.send(customSuccessMessage("Bloque asociado correctamente."));
+                            })
+                            .catch(err => {
+                                console.log(err);
+                                res.status(400);
+                                res.send(customErrorMessage("Ocurrió un error asociando el bloque."));
+                            });
+
+                    }else{
+
+                        getInterbloqueById(req.body.interbloque_id,function(id,interbloque){
+
+                            if(interbloque!=null) {
+
+                                extra.diputado = null;
+                                extra.bloque = null;
+                                extra.interbloque = interbloque;
+
+                                extra.save()
+                                .then(extra => {
+                                    res.status(200);
+                                    res.send(customSuccessMessage("Interbloque asociado correctamente."));
+                                })
+                                .catch(err => {
+                                    console.log(err);
+                                    res.status(400);
+                                    res.send(customErrorMessage("Ocurrió un error asociando el interbloque."));
+                                });
+
+                            }else{
+                                res.status(200);
+                                res.send(customErrorMessage("Ocurrió un error al asociar el usuario con un diputado, bloque o interbloque."));
+                            }
+
+                        });
+
+                    }
+
+                });
+            }
+
+        });
+
     });
-
-    res.send('Done')
 }
 
 exports.list_all_extras = function(req, res) {
     Extra.find({}, function(err, extra) {
         if (err)
             res.send(err);
-        console.log(extra)
         res.send(customSuccessMessage(extra));
     });
 };
@@ -769,6 +831,10 @@ function getInterbloqueByBloque(bloque, callback){
 
 function getBloqueById(_id, callback){
 
+    if(_id=="-1" || _id===null) {
+        _id = null;
+    }
+
     var ObjectId = mongoose.Types.ObjectId;
     var a = new ObjectId(_id);
 
@@ -793,6 +859,24 @@ function getExtraByGuid(guid, callback){
 
 }
 
+function getExtraById(_id, callback){
+
+    if(_id=="-1" || _id===null) {
+        _id = null;
+    }
+
+    var ObjectId = mongoose.Types.ObjectId;
+    var a = new ObjectId(_id);
+
+    Extra.findOne({ '_id': a }, function (err, extra) {
+        if(extra==null){
+            callback(null);
+        }else{
+            callback(extra._id, extra);
+        }
+    });
+}
+
 function getDiputadoById(_id, callback){
 
     if(_id=="-1" || _id===null) {
@@ -811,6 +895,19 @@ function getDiputadoById(_id, callback){
     });
 }
 
+function getInterbloqueById(_id, callback){
+
+    var ObjectId = mongoose.Types.ObjectId;
+    var a = new ObjectId(_id);
+
+    Interbloque.findOne({ '_id': a }, function (err, interbloque) {
+        if(interbloque==null){
+            callback(null);
+        }else{
+            callback(interbloque._id, interbloque);
+        }
+    });
+}
 
 function successMessage(){
   var r = {
