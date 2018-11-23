@@ -26,6 +26,9 @@ module.exports = function(app) {
     app.route('/get/extra')
         .get(rolestack.list_all_extras);
 
+    app.route('/get/extra/:guid')
+        .get(rolestack.get_extra_by_guid);
+
     app.route('/update/extra')
         .post(rolestack.update_extra_by_guid);
 

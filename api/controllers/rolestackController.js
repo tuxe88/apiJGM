@@ -368,34 +368,18 @@ exports.list_all_extras = function(req, res) {
 
 exports.get_extra_by_guid = function(req, res) {
 
-    //busco el extra en la base
     Extra.findOne({'guid': req.params.guid}, function (err, extra) {
-        var found = true;
 
         if(err){
-            found = false;
             res.send((customErrorMessage("Ocurrió un error buscando al usuario")))
         }
 
-            //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
+        //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
         if(extra==null){
-            var log = "";
-
-            //busco el user
-            var user = "test";//??????????
-            if(user==null){
-                res.send(customErrorMessage("Usuario no encontrado"));
-            }
-
-            extra = new Extra({guid: "guid_test", cuil: "20000000001",
-                                        contacto: "contacto_test", apellido: "apellido_test",
-                                        nombre : "nombre_test"
-                                        });
-            extra.save();
-
+            res.send(customErrorMessage("Usuario no encontrado"));
         }
 
-        return res.json(extra)
+        return res.json(customSuccessMessage(extra))
     });
 
 };
