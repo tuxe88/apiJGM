@@ -1,6 +1,6 @@
 var express = require('express'),
   app = express(),
-  port = process.env.PORT || 4180,
+  port =  4180,
   mongoose = require('mongoose'),
   Task = require('./api/models/rolestackModel'), //created model loading here
   bodyParser = require('body-parser');
