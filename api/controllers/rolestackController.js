@@ -279,82 +279,121 @@ exports.save_requerimiento = function(req, res) {
 //EXTRAS
 
 exports.update_extra_by_guid = function (req, res) {
-
+   
     getExtraById(req.body.extra_id, function(err, extra){
+      
+        if( extra!=null && req.body.bloque_id==-1 && req.body.interbloque_id==-1 && req.body.diputado_id==-1 ){
+            
+            extra.diputado = null;
+            extra.bloque = null;
+            extra.interbloque = null;
 
-        getDiputadoById(req.body.diputado_id, function(id,diputado){
-
-            if(diputado != null){
-
-                extra.diputado = diputado;
-                extra.bloque = diputado.bloque;
-                extra.interbloque = diputado.interbloque;
-
-                extra.save()
-                    .then(extra => {
-                        res.status(200);
-                        res.send(customSuccessMessage("Diputado asociado correctamente."));
-                    })
-                    .catch(err => {
-                        console.log(err);
-                        res.status(400);
-                        res.send(customErrorMessage("Ocurrió un error asociando el diputado."));
-                    });
-            }else{
-                getBloqueById(req.body.bloque_id,function(id,bloque){
-
-                    if(bloque!=null){
-
-                        extra.diputado = null;
-                        extra.bloque = bloque;
-                        extra.interbloque = bloque.interbloque;
-
-                        extra.save()
-                            .then(extra => {
-                                res.status(200);
-                                res.send(customSuccessMessage("Bloque asociado correctamente."));
-                            })
-                            .catch(err => {
-                                console.log(err);
-                                res.status(400);
-                                res.send(customErrorMessage("Ocurrió un error asociando el bloque."));
-                            });
-
-                    }else{
-
-                        getInterbloqueById(req.body.interbloque_id,function(id,interbloque){
-
-                            if(interbloque!=null) {
-
-                                extra.diputado = null;
-                                extra.bloque = null;
-                                extra.interbloque = interbloque;
-
-                                extra.save()
-                                .then(extra => {
-                                    res.status(200);
-                                    res.send(customSuccessMessage("Interbloque asociado correctamente."));
-                                })
-                                .catch(err => {
-                                    console.log(err);
-                                    res.status(400);
-                                    res.send(customErrorMessage("Ocurrió un error asociando el interbloque."));
-                                });
-
-                            }else{
-                                res.status(200);
-                                res.send(customErrorMessage("Ocurrió un error al asociar el usuario con un diputado, bloque o interbloque."));
-                            }
-
-                        });
-
-                    }
-
+            extra.save()
+                .then(extra => {
+                    res.status(200);
+                    res.send(customSuccessMessage("Asosiaciones borradas correctamente"));
+                })
+                .catch(err => {
+                    console.log(err);
+                    res.status(400);
+                    res.send(customErrorMessage("Ocurrió un error borrando las asociaciones."));
                 });
-            }
-
-        });
-
+            
+        }else{
+          
+            getDiputadoById(req.body.diputado_id, function(id,diputado){
+  
+              if(diputado != null){
+  
+                  extra.diputado = diputado;
+                  extra.bloque = diputado.bloque;
+                  extra.interbloque = diputado.interbloque;
+  
+                  extra.save()
+                      .then(extra => {
+                          res.status(200);
+                          res.send(customSuccessMessage("Diputado asociado correctamente."));
+                      })
+                      .catch(err => {
+                          console.log(err);
+                          res.status(400);
+                          res.send(customErrorMessage("Ocurrió un error asociando el diputado."));
+                      });
+              }else{
+                  getBloqueById(req.body.bloque_id,function(id,bloque){
+  
+                      if(bloque!=null){
+  
+                          extra.diputado = null;
+                          extra.bloque = bloque;
+                          extra.interbloque = bloque.interbloque;
+  
+                          extra.save()
+                              .then(extra => {
+                                  res.status(200);
+                                  res.send(customSuccessMessage("Bloque asociado correctamente."));
+                              })
+                              .catch(err => {
+                                  console.log(err);
+                                  res.status(400);
+                                  res.send(customErrorMessage("Ocurrió un error asociando el bloque."));
+                              });
+  
+                      }else{
+  
+                          getInterbloqueById(req.body.interbloque_id,function(id,interbloque){
+  
+                              if(interbloque!=null) {
+  
+                                  extra.diputado = null;
+                                  extra.bloque = null;
+                                  extra.interbloque = interbloque;
+  
+                                  extra.save()
+                                  .then(extra => {
+                                      res.status(200);
+                                      res.send(customSuccessMessage("Interbloque asociado correctamente."));
+                                  })
+                                  .catch(err => {
+                                      console.log(err);
+                                      res.status(400);
+                                      res.send(customErrorMessage("Ocurrió un error asociando el interbloque."));
+                                  });
+  
+                              }else{
+                                  
+                                  res.status(200);
+                                  res.send(customSuccessMessage("dadadad"));
+                                  
+                                  
+                                  extra.diputado = null;
+                                  extra.bloque = null;
+                                  extra.interbloque = null;
+  
+                                  extra.save()
+                                  .then(extra => {
+                                      res.status(200);
+                                      res.send(customSuccessMessage("Asosiación removida correctamente"));
+                                  })
+                                  .catch(err => {
+                                      console.log(err);
+                                      res.status(400);
+                                      res.send(customErrorMessage("Ocurrió un error asociando el interbloque."));
+                                  });
+                                  
+                              }
+  
+                          });
+  
+                      }
+  
+                  });
+              }
+  
+          });
+          
+        }
+        
     });
 }
 
@@ -370,16 +409,12 @@ exports.get_extra_by_guid = function(req, res) {
 
     Extra.findOne({'guid': req.params.guid}, function (err, extra) {
 
-        if(err){
-            res.send((customErrorMessage("Ocurrió un error buscando al usuario")))
-        }
-
         //si el extra no existe tengo que buscar los datos del user en la base de usuarios y crearlo
         if(extra==null){
             res.send(customErrorMessage("Usuario no encontrado"));
         }
 
-        return res.json(customSuccessMessage(extra))
+        return res.send(customSuccessMessage(extra))
     });
 
 };
