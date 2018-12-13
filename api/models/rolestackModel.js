@@ -75,26 +75,15 @@ var Requerimiento = new Schema({
     extra: Extra
 });
 
-
-
-
 var Informe = new Schema({
-    _id: {
-        type: String,
-        required: 'Es necesario un id para el informe',
-    },
-    numero: {
-        type: Number
-    },
-    fecha_inicio: {
-        type: Date,
-        default: Date.now
-    },
-    fecha_fin: {
-        type: Date
-    },
+    numero: Number,
+    fecha_visita: Date,
+    nota: String,
+    fecha_inicio: Date,
+    fecha_fin: Date,
+    estado: Number,
+    terminado: Boolean
 });
-
 
 var Role = new Schema({
   _id: {

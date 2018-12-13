@@ -33,6 +33,13 @@ exports.list_all_bloques = function(req, res) {
     });
 };
 
+exports.get_bloque_by_id = function(req,res) {
+    
+    getBloquesById(req.params.id_bloque, function(bloqueId, bloque) {
+        res.send(customSuccessMessage(bloque));
+    });
+};
+
 //INTERBLOQUE
 exports.list_all_interbloques = function(req, res) {
     Interbloque.find({}, function(err, task) {
@@ -53,17 +60,58 @@ exports.list_all_diputados = function(req, res) {
     });
 };
 
-exports.get_diputados_by_bloque = function(req, res) {
-
-    Diputado.find({ 'bloque._id': req.params.bloque_id }, function (err, doc) {
+exports.get_diputado_by_cuil = function(req, res) {
+    
+    console.log(req.params.cuil);
+    
+    Diputado.find({ 'cuil': req.params.cuil }, function (err, doc) {
 
         if(doc==null||err!=null){
+            res.send(customErrorMessage("No se encontro el diputado"));
+            return;
+        }
+
+        return res.send(customSuccessMessage(doc));
+    });
+};
+
+exports.get_diputados_by_bloque = function(req, res) {
+    
+    var ObjectId = mongoose.Types.ObjectId;
+    /*
+    Diputado.find({'bloque._id':new ObjectId(req.params.bloque_id)}, function(err, dipus){
+      
+      if(dipus==null||err!=null){
+          return res.send(customErrorMessage("No se encontraron diputados"));
+      }
+      
+      console.log('-------------\n',dipus.length,req.params.bloque_id,'\n-------------');
+      
+      return res.send(customSuccessMessage(dipus));  
+      
+    });
+    */
+    
+    Bloque.findOne({ '_id': ObjectId(req.params.bloque_id) }, function (err, bloque) {
+        if(bloque==null||err!=null){
             res.send(customErrorMessage("No se encontro el bloque"));
             return;
         }
 
-        return res.json(doc);
+        Diputado.find({ 'bloque._id': req.params.bloque_id }, function (err, doc) {
+    
+            if(doc==null||err!=null){
+                res.send(customErrorMessage("No se encontraron diputados"));
+                return
+            }
+            
+            return res.send(customSuccessMessage(doc));
+        });
+        
     });
+    
+    
+    
 };
 
 exports.get_diputados_by_interbloque = function(req, res) {
@@ -104,15 +152,115 @@ exports.list_all_informes = function(req, res) {
 exports.get_informe = function(req, res) {
 
     Informe.findOne({ 'numero': req.params.informe_id }, function (err, doc) {
-
+        
         if(doc==null||err!=null){
             res.send(customErrorMessage("No se encontró el informe"));
             return;
         }
 
-        return res.json(doc);
+        return res.send(customSuccessMessage(doc));
     });
 };
+
+exports.get_last_informe = function(req, res) {
+    
+    Informe.findOne({'estado':0}).sort('-numero').exec( function(err, doc) {
+        
+        if(err!=null){
+          res.send(customErrorMessage("Ocurrió un error buscando el último informe"));
+        }
+        
+        if(doc==null){
+          res.send(customErrorMessage("No se encontró el último informe"));
+        }else{
+          
+          var hoy = new Date(Date.now());
+          console.log("hoy: "+hoy, " - fin informe: "+doc.fecha_fin);
+          console.log(doc.fecha_fin < hoy);
+
+          if( doc.fecha_fin < hoy ){
+            console.log("El informe se cerró");
+            //aca seteo todos los demas informes en 1
+            doc.update({}, { 'estado':1, 'terminado':true });
+            
+            Informe.findOne({ numero: doc.numero }, function (err, doc_terminado){
+              
+                if(err!=null){
+                  res.send(customErrorMessage("No se pudo actualizar el ultimo informe"));
+                }
+                
+                doc_terminado.terminado = true;
+                doc_terminado.estado = 1;
+                doc_terminado.save()
+                .then(requerimiento => {
+                    //console.log(customSuccessMessage("prueba"));
+                    console.log("guardado");
+                    res.status(200);
+                    res.send(customSuccessMessage(doc_terminado));
+                })
+                .catch(err => {
+                    console.log(err);
+                    res.status(400);
+                    res.send(customErrorMessage("Informe no encontrado"));
+                });
+              
+            });
+            
+          }else{
+            
+            res.status(200);
+            return res.send(customSuccessMessage(doc));
+            
+          }
+        
+        }
+        
+    });
+
+};
+
+exports.save_informe = function(req, res) {
+
+    var nuevoInforme = new Informe();
+    
+    Informe.findOne({ 'numero': req.body.numero }, function (err, doc) {
+        
+        if(err!=null){
+            res.send(customErrorMessage("No se pudo crear el informe"));
+            return;
+        }
+        
+        if(doc==null){
+            
+            nuevoInforme.numero = req.body.numero;
+            nuevoInforme.fecha_inicio = new Date(parseInt(req.body.fecha_inicio));
+            nuevoInforme.fecha_fin = new Date(parseInt(req.body.fecha_fin));
+            nuevoInforme.estado = 0;
+            nuevoInforme.terminado = false;
+            
+            //aca seteo todos los demas informes en 1
+            Informe.updateMany({}, { 'estado': 1 });
+            
+            nuevoInforme.save()
+            .then(requerimiento => {
+                //console.log(customSuccessMessage("prueba"));
+                res.status(200);
+                res.send(customSuccessMessage("Informe guardado correctamente"));
+            })
+            .catch(err => {
+                console.log(err);
+                res.status(400);
+                res.send(customErrorMessage("No se pudo guardar el informe"));
+            });
+            
+        }else{
+          res.send(customErrorMessage("El numero de informe ya está utilizado"));
+        }
+
+    });
+    
+}
+
 
 //REQUERIMIENTO
 exports.list_all_requerimientos = function(req, res) {
@@ -853,11 +1001,29 @@ function getBloqueById(_id, callback){
     if(_id=="-1" || _id===null) {
         _id = null;
     }
-
+    
     var ObjectId = mongoose.Types.ObjectId;
     var a = new ObjectId(_id);
 
     Bloque.findOne( { "_id" :a } , function (err, bloque) {
+        if(bloque==null){
+            callback(null);
+        }else{
+            callback(bloque._id, bloque);
+        }
+    });
+}
+
+function getBloquesById(_id, callback){
+
+    if(_id=="-1" || _id===null) {
+        _id = null;
+    }
+    
+    var ObjectId = mongoose.Types.ObjectId;
+    var a = new ObjectId(_id);
+
+    Bloque.find( { "_id" :a } , function (err, bloque) {
         if(bloque==null){
             callback(null);
         }else{

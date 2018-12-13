@@ -7,6 +7,9 @@ module.exports = function(app) {
 //BLOQUE
     app.route('/get/bloque')
         .get(rolestack.list_all_bloques);
+        
+    app.route('/get/bloque/:id_bloque')
+        .get(rolestack.get_bloque_by_id);
 
 //INTERBLOQUE
     app.route('/get/interbloque')
@@ -15,6 +18,9 @@ module.exports = function(app) {
 //DIPUTADO
     app.route('/get/diputado')
         .get(rolestack.list_all_diputados);
+        
+    app.route('/get/diputado/cuil/:cuil')
+        .get(rolestack.get_diputado_by_cuil);
 
     app.route('/get/diputado/bloque/:bloque_id')
         .get(rolestack.get_diputados_by_bloque);
@@ -36,8 +42,11 @@ module.exports = function(app) {
     app.route('/get/informe')
         .get(rolestack.list_all_informes);
 
-    app.route('/get/informe/:informe_id')
-        .get(rolestack.get_informe);
+    app.route('/get/informe/last')
+        .get(rolestack.get_last_informe);
+    
+    app.route('/post/informe')
+        .post(rolestack.save_informe);
 
 //REQUERIMIENTO
     app.route('/get/requerimiento')
